@@ -73,16 +73,78 @@ int cast_en_int (char instruction[INSTRUCTION_TAILLE])
     return strtol(instruction, &ptr, CONVERTION_BASE);
 }
 
+int pile_rol ( pile_t * back, pile_t* pile, int i ) /* selectionne l'element i de la pile et le remonte au haut de la pile */
+{
+    if ( pile == NULL ) /* la pile est vide */
+        return NULL;
+    if ( i == 1 )
+    {
+        pile_t* under = pile->under;
+        int value = pile->value;
+        free(pile); /* supprime le level actuel */
+        back->under = under;
+        return value;
+    }
+    else
+         return pile_rol ( pile, pile->under, i-1 );
+}
+
+pile_t* pile_swp ( pile_t* pile ) /* change les positions du premier et second element de la pile */
+{
+    if ( pile == NULL ) /* la pile est vide */
+        return NULL;
+    if ( pile->under != NULL ) /* il existe un deuxième élément dans la pile */
+    {
+        int temp = pile->value;
+        pile->value = pile->under->value;
+        pile->under->value = temp;
+    }
+    return pile;
+}
+
+pile_t* pile_dup ( pile_t* level ) /* duplique le premier element de la pile */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    return level_add(level, level_create(level->value, level));
+}
+
+pile_t* pile_pop ( pile_t* level ) /* retire le premier element de la pile */
+{
+    pile_t* under = NULL;
+    if ( level != NULL ) /* la pile n'est pas vide */
+    {
+        under = level->under;
+        free(level);
+    }
+    return under;
+}
+
 pile_t* operation ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
     if ( strcmp("ROL", instruction) == 0 )
-        fprintf(stderr, "rol\n");
+    {
+        //fprintf(stderr, "rol\n");
+        int i = pile->value;
+        pile = pile_pop(pile);
+        i = pile_rol(pile, pile->under, i-1);
+        pile = level_add(pile, level_create(i, pile));
+    }
     else if ( strcmp("SWP", instruction) == 0 )
-        fprintf(stderr, "swp\n");
+    {
+        //fprintf(stderr, "swp\n");
+        pile = pile_swp(pile);
+    }
     else if ( strcmp("DUP", instruction) == 0 )
+    {
         fprintf(stderr, "dup\n");
+        pile = pile_dup(pile);
+    }
     else if ( strcmp("POP", instruction) == 0 )
+    {
         fprintf(stderr, "pop\n");
+        pile = pile_pop(pile);
+    }
     else if ( strcmp("MOD", instruction) == 0 )
         fprintf(stderr, "mod\n");
     else if ( strcmp("DIV", instruction) == 0 )
@@ -117,8 +179,7 @@ int main()
         if ( est_un_int(instruction) )
         {
             // fprintf(stderr, "C'est un int : %d; ", cast_en_int(instruction));
-            pile_t* level = level_create(cast_en_int(instruction), pile);
-            pile = level_add(pile, level);
+            pile = level_add(pile, level_create(cast_en_int(instruction), pile));
         }
         else
         {
