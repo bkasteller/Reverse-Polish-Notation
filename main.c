@@ -75,8 +75,11 @@ int cast_en_int (char instruction[INSTRUCTION_TAILLE])
 
 int pile_rol ( pile_t * back, pile_t* pile, int i ) /* selectionne l'element i de la pile et le remonte au haut de la pile */
 {
-    if ( pile == NULL ) /* la pile est vide */
-        return NULL;
+    if ( back == NULL || pile == NULL ) /* la pile est vide */
+    {
+        err = 1;
+        return 0;
+    }
     if ( i == 1 )
     {
         pile_t* under = pile->under;
@@ -120,6 +123,86 @@ pile_t* pile_pop ( pile_t* level ) /* retire le premier element de la pile */
     return under;
 }
 
+pile_t* pile_mod ( pile_t* level ) /* effectue le modulo */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    if ( level->under == NULL ) /* la pile comporte qu'un element */
+    {
+        err = 1;
+        return level;
+    }
+    int gauche = level->under->value, droit = level->value;
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);
+    return level_add(under, level_create(gauche%droit, under));
+}
+
+pile_t* pile_div ( pile_t* level ) /* effectue la division */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    if ( level->under == NULL ) /* la pile comporte qu'un element */
+    {
+        err = 1;
+        return level;
+    }
+    int gauche = level->under->value, droit = level->value;
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);
+    return level_add(under, level_create(gauche/droit, under));
+}
+
+pile_t* pile_mul ( pile_t* level ) /* effectue la multiplication */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    if ( level->under == NULL ) /* la pile comporte qu'un element */
+    {
+        err = 1;
+        return level;
+    }
+    int gauche = level->under->value, droit = level->value;
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);
+    return level_add(under, level_create(gauche*droit, under));
+}
+
+pile_t* pile_sub ( pile_t* level ) /* effectue la soustraction */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    if ( level->under == NULL ) /* la pile comporte qu'un element */
+    {
+        err = 1;
+        return level;
+    }
+    int gauche = level->under->value, droit = level->value;
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);
+    return level_add(under, level_create(gauche-droit, under));
+}
+
+pile_t* pile_add ( pile_t* level ) /* effectue une addition */
+{
+    if ( level == NULL ) /* la pile est vide */
+        return NULL;
+    if ( level->under == NULL ) /* la pile comporte qu'un element */
+    {
+        err = 1;
+        return level;
+    }
+    int gauche = level->under->value, droit = level->value;
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);
+    return level_add(under, level_create(gauche+droit, under));
+}
+
 pile_t* operation ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
     if ( strcmp("ROL", instruction) == 0 )
@@ -137,24 +220,39 @@ pile_t* operation ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
     }
     else if ( strcmp("DUP", instruction) == 0 )
     {
-        fprintf(stderr, "dup\n");
+        //fprintf(stderr, "dup\n");
         pile = pile_dup(pile);
     }
     else if ( strcmp("POP", instruction) == 0 )
     {
-        fprintf(stderr, "pop\n");
+        //fprintf(stderr, "pop\n");
         pile = pile_pop(pile);
     }
     else if ( strcmp("MOD", instruction) == 0 )
-        fprintf(stderr, "mod\n");
+    {
+        //fprintf(stderr, "mod\n");
+        pile = pile_mod(pile);
+    }
     else if ( strcmp("DIV", instruction) == 0 )
-        fprintf(stderr, "div\n");
+    {
+        //fprintf(stderr, "div\n");
+        pile = pile_div(pile);
+    }
     else if ( strcmp("MUL", instruction) == 0 )
-        fprintf(stderr, "mul\n");
+    {
+        //fprintf(stderr, "mul\n");
+        pile = pile_mul(pile);
+    }
     else if ( strcmp("SUB", instruction) == 0 )
-        fprintf(stderr, "sub\n");
+    {
+        //fprintf(stderr, "sub\n");
+        pile = pile_sub(pile);
+    }
     else if ( strcmp("ADD", instruction) == 0 )
-        fprintf(stderr, "add\n");
+    {
+        //fprintf(stderr, "add\n");
+        pile = pile_add(pile);
+    }
     else
         err = 1;
     return pile;
