@@ -6,7 +6,6 @@
 #define INSTRUCTION_TAILLE 11 /* Définit la taille d'une instruction */
 #define CONVERTION_BASE 10 /* Définit la basse de convertion */
 
-
 int err = 0; /* Variable global */
 
 typedef struct pile
@@ -37,12 +36,14 @@ void pile_reset(pile_t* level) /* Libère l'espace mémoire de chaque level de l
     }
 }
 
-void pile_show(pile_t* level) /* Affiche les valeurs des différents niveau de la pile, en partant du BAS vers le HAUT */
+void pile_show(pile_t* level, int i) /* Affiche les valeurs des différents niveau de la pile, en partant du BAS vers le HAUT */
 {
     if ( level != NULL ) /* Plus de niveau inférieur, on a fini de parcourir la pile */
     {
-        pile_show(level->under);
-        printf("%d ", level->value); /* du bas vers le haut, à passer au dessus de l'instruction pile_show(level->under); pour inverser */
+        pile_show(level->under, i+1);
+        printf("%d", level->value); /* du bas vers le haut, à passer au dessus de l'instruction pile_show(level->under); pour inverser */
+        if ( i != 0 )
+            printf(" ");
     }
 }
 
@@ -53,7 +54,6 @@ pile_t* level_add(pile_t* pile, pile_t* level) /* Ajoute un nouveau level à la 
         level->under = NULL;
         return level;
     }
-    //pile->under = level_add(pile->under, level); /* AJOUT EN BAS DE LA PILE */
     level->under = pile; /* AJOUT AU DESSUS DE LA PILE */
     return /*pile*/level;
 }
@@ -62,7 +62,7 @@ int est_un_int (char instruction[INSTRUCTION_TAILLE])
 {
     int i;
     for ( i = 0; i < INSTRUCTION_TAILLE && instruction[i] != '\0'; i++ )
-        if ( !isdigit(instruction[i]) )
+        if ( instruction[0] != '-' && !isdigit(instruction[i]) ) // n'est pas un char et n'est pas un -
             return 0;
     return 1;
 }
@@ -130,6 +130,7 @@ pile_t* pile_mod ( pile_t* level ) /* effectue le modulo */
     if ( level->under == NULL ) /* la pile comporte qu'un element */
     {
         err = 1;
+        free(level);
         return level;
     }
     int gauche = level->under->value, droit = level->value;
@@ -146,9 +147,18 @@ pile_t* pile_div ( pile_t* level ) /* effectue la division */
     if ( level->under == NULL ) /* la pile comporte qu'un element */
     {
         err = 1;
+        level = pile_pop(level);
+        level = pile_pop(level);
         return level;
     }
     int gauche = level->under->value, droit = level->value;
+    if ( droit == 0 )
+    {
+        err = 1;
+        level = pile_pop(level);
+        level = pile_pop(level);
+        return level;
+    }
     pile_t* under = level->under->under;
     free(level->under);
     free(level);
@@ -162,6 +172,7 @@ pile_t* pile_mul ( pile_t* level ) /* effectue la multiplication */
     if ( level->under == NULL ) /* la pile comporte qu'un element */
     {
         err = 1;
+        level = pile_pop(level);
         return level;
     }
     int gauche = level->under->value, droit = level->value;
@@ -178,6 +189,7 @@ pile_t* pile_sub ( pile_t* level ) /* effectue la soustraction */
     if ( level->under == NULL ) /* la pile comporte qu'un element */
     {
         err = 1;
+        level = pile_pop(level);
         return level;
     }
     int gauche = level->under->value, droit = level->value;
@@ -194,6 +206,7 @@ pile_t* pile_add ( pile_t* level ) /* effectue une addition */
     if ( level->under == NULL ) /* la pile comporte qu'un element */
     {
         err = 1;
+        level = pile_pop(level);
         return level;
     }
     int gauche = level->under->value, droit = level->value;
@@ -205,63 +218,33 @@ pile_t* pile_add ( pile_t* level ) /* effectue une addition */
 
 pile_t* operation ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
-    if ( strcmp("ROL", instruction) == 0 )
+    if ( !strcmp("ROL", instruction) )
     {
-        //fprintf(stderr, "rol\n");
-        int i = pile->value;
+        int n = pile->value;
         pile = pile_pop(pile);
-        i = pile_rol(pile, pile->under, i-1);
-        pile = level_add(pile, level_create(i, pile));
+        n = pile_rol(pile, pile->under, n-1);
+        pile = level_add(pile, level_create(n, pile));
     }
-    else if ( strcmp("SWP", instruction) == 0 )
-    {
-        //fprintf(stderr, "swp\n");
+    else if ( !strcmp("SWP", instruction) )
         pile = pile_swp(pile);
-    }
-    else if ( strcmp("DUP", instruction) == 0 )
-    {
-        //fprintf(stderr, "dup\n");
+    else if ( !strcmp("DUP", instruction) )
         pile = pile_dup(pile);
-    }
-    else if ( strcmp("POP", instruction) == 0 )
-    {
-        //fprintf(stderr, "pop\n");
+    else if ( !strcmp("POP", instruction) )
         pile = pile_pop(pile);
-    }
-    else if ( strcmp("MOD", instruction) == 0 )
-    {
-        //fprintf(stderr, "mod\n");
+    else if ( !strcmp("MOD", instruction) )
         pile = pile_mod(pile);
-    }
-    else if ( strcmp("DIV", instruction) == 0 )
-    {
-        //fprintf(stderr, "div\n");
+    else if ( !strcmp("DIV", instruction) )
         pile = pile_div(pile);
-    }
-    else if ( strcmp("MUL", instruction) == 0 )
-    {
-        //fprintf(stderr, "mul\n");
+    else if ( !strcmp("MUL", instruction) )
         pile = pile_mul(pile);
-    }
-    else if ( strcmp("SUB", instruction) == 0 )
-    {
-        //fprintf(stderr, "sub\n");
+    else if ( !strcmp("SUB", instruction) )
         pile = pile_sub(pile);
-    }
-    else if ( strcmp("ADD", instruction) == 0 )
-    {
-        //fprintf(stderr, "add\n");
+    else if ( !strcmp("ADD", instruction) )
         pile = pile_add(pile);
-    }
     else
         err = 1;
     return pile;
 }
-
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
 
 int main()
 {
@@ -272,24 +255,18 @@ int main()
     {
         char instruction[INSTRUCTION_TAILLE];
         scanf("%s", instruction);
-        // int j;
-        // for ( j = 0; j < 11, instruction[j] != '\0'; j++ ){fprintf(stderr, "%c; ", instruction[j]);}
         if ( est_un_int(instruction) )
-        {
-            // fprintf(stderr, "C'est un int : %d; ", cast_en_int(instruction));
             pile = level_add(pile, level_create(cast_en_int(instruction), pile));
-        }
         else
-        {
-            // fprintf(stderr, "Ce n'est pas un int : %s; ", instruction);
             pile = operation(pile, instruction);
-        }
     }
-    /* Write an action using printf(). DON'T FORGET THE TRAILING \n
-       To debug: fprintf(stderr, "Debug messages...\n"); */
-    pile_show(pile);
+    pile_show(pile, 0);
     if ( err )
-        printf("ERREUR");
+    {
+        if ( pile != NULL )
+            printf(" ");
+        printf("ERROR");
+    }
     printf("\n");
     pile_reset(pile);
     return 0;
