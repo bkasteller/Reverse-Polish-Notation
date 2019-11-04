@@ -26,6 +26,33 @@ typedef struct pile
     struct pile *under;
 }pile_t;
 
+/* cree un nouveau level contenant une valeur */
+pile_t* level_create(int value)
+{
+    pile_t* level = (pile_t*)malloc(sizeof(pile_t));
+
+    if ( level == NULL )
+    {
+        fprintf(stderr, "Mémoire insuffisante à la creation d'un nouveau level de la pile\n");
+        exit(1);
+    }
+
+    level->value = value;
+
+    /* N'est relie a aucune pile pour l'instant */
+    level->under = NULL;
+
+    return level;
+}
+
+/* Ajoute un level à la pile */
+pile_t* level_add(pile_t* pile, pile_t* level)
+{
+    /* ajout au dessus de la pile */
+    level->under = pile;
+    return level;
+}
+
 /* Libere l'espace memoire de chaque level de la pile */
 void pile_reset(pile_t* level)
 {
@@ -58,40 +85,6 @@ void pile_show(pile_t* level, int i)
     }
 }
 
-/* cree un nouveau level contenant une valeur */
-pile_t* level_create(int value)
-{
-    pile_t* level = (pile_t*)malloc(sizeof(pile_t));
-
-    if ( level == NULL )
-    {
-        fprintf(stderr, "Mémoire insuffisante à la creation d'un nouveau level de la pile\n");
-        exit(1);
-    }
-
-    level->value = value;
-
-    /* N'est relie a aucune pile pour l'instant */
-    pile ->under = NULL;
-
-    return level;
-}
-
-/* Ajoute un level à la pile */
-pile_t* level_add(pile_t* pile, pile_t* level)
-{
-    /* Necessaire quand on ajoute en dessous de la pile
-    if ( pile == NULL )
-    {
-        level->under = NULL;
-        return level;
-    }*/
-
-    /* ajout au dessus de la pile */
-    level->under = pile;
-    return level;
-}
-
 /* Permet de savoir si une instruction est un nombre */
 int est_un_int (char instruction[INSTRUCTION_TAILLE])
 {
@@ -109,13 +102,18 @@ int cast_en_int (char instruction[INSTRUCTION_TAILLE])
     return strtol(instruction, &ptr, CONVERTION_BASE);
 }
 
+
+
+
+
+
+
+
+
+
+
 int pile_rol ( pile_t * back, pile_t* pile, int i ) /* selectionne l'element i de la pile et le remonte au haut de la pile */
 {
-    if ( back == NULL || pile == NULL ) /* la pile est vide */
-    {
-        err = 1;
-        return 0;
-    }
     if ( i == 1 )
     {
         pile_t* under = pile->under;
@@ -128,196 +126,168 @@ int pile_rol ( pile_t * back, pile_t* pile, int i ) /* selectionne l'element i d
          return pile_rol ( pile, pile->under, i-1 );
 }
 
-pile_t* pile_swp ( pile_t* pile ) /* change les positions du premier et second element de la pile */
+
+
+
+
+
+
+
+
+
+
+
+/* Change les positions du premier et second element de la pile */
+pile_t* pile_swp ( pile_t* pile )
 {
-    if ( pile == NULL ) /* la pile est vide */
-        return NULL;
-    if ( pile->under != NULL ) /* il existe un deuxième élément dans la pile */
-    {
-        int temp = pile->value;
-        pile->value = pile->under->value;
-        pile->under->value = temp;
-    }
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    int temp = pile->value;
+    pile->value = pile->under->value;
+    pile->under->value = temp;
     return pile;
 }
 
-pile_t* pile_dup ( pile_t* level ) /* duplique le premier element de la pile */
+/* Duplique le premier element de la pile */
+pile_t* pile_dup ( pile_t* level )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    return level_add(level, level_create(level->value, level));
+    if ( !verif_pile(pile, 1) )
+        erreur(pile);
+
+    return level_add(level, level_create(level->value));
 }
 
-pile_t* pile_pop ( pile_t* level ) /* retire le premier element de la pile */
+/* Retire le premier element de la pile */
+pile_t* pile_pop ( pile_t* level )
 {
-    pile_t* under = NULL;
-    if ( level != NULL ) /* la pile n'est pas vide */
-    {
-        under = level->under;
-        free(level);
-    }
+    if ( !verif_pile(pile, 1) )
+        erreur(pile);
+
+    pile_t* under = level->under;
+    free(level);
     return under;
 }
 
-pile_t* pile_mod ( pile_t* level ) /* effectue le modulo */
+/* Modulo */
+pile_t* pile_mod ( pile_t* pile, int gauche, int droit )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    if ( level->under == NULL ) /* la pile comporte qu'un element */
-    {
-        err = 1;
-        free(level);
-        return level;
-    }
-    int gauche = level->under->value, droit = level->value;
-    pile_t* under = level->under->under;
-    free(level->under);
-    free(level);
-    return level_add(under, level_create(gauche%droit, under));
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    return level_add(pile, level_create(gauche%droit));
 }
 
-pile_t* pile_div ( pile_t* level ) /* effectue la division */
+/* Division */
+pile_t* pile_div ( pile_t* pile, int gauche, int droit )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    if ( level->under == NULL ) /* la pile comporte qu'un element */
-    {
-        err = 1;
-        level = pile_pop(level);
-        level = pile_pop(level);
-        return level;
-    }
-    int gauche = level->under->value, droit = level->value;
-    if ( droit == 0 )
-    {
-        err = 1;
-        level = pile_pop(level);
-        level = pile_pop(level);
-        return level;
-    }
-    pile_t* under = level->under->under;
-    free(level->under);
-    free(level);
-    return level_add(under, level_create(gauche/droit, under));
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    return level_add(pile, level_create(gauche/droit));
 }
 
-pile_t* pile_mul ( pile_t* level ) /* effectue la multiplication */
+/* Multiplication */
+pile_t* pile_mul ( pile_t* pile, int gauche, int droit )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    if ( level->under == NULL ) /* la pile comporte qu'un element */
-    {
-        err = 1;
-        level = pile_pop(level);
-        return level;
-    }
-    int gauche = level->under->value, droit = level->value;
-    pile_t* under = level->under->under;
-    free(level->under);
-    free(level);
-    return level_add(under, level_create(gauche*droit, under));
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    return level_add(pile, level_create(gauche*droit));
 }
 
-pile_t* pile_sub ( pile_t* level ) /* effectue la soustraction */
+/* Soustraction */
+pile_t* pile_sub ( pile_t* pile, int gauche, int droit )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    if ( level->under == NULL ) /* la pile comporte qu'un element */
-    {
-        err = 1;
-        level = pile_pop(level);
-        return level;
-    }
-    int gauche = level->under->value, droit = level->value;
-    pile_t* under = level->under->under;
-    free(level->under);
-    free(level);
-    return level_add(under, level_create(gauche-droit, under));
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    return level_add(pile, level_create(gauche-droit));
 }
 
-pile_t* pile_add ( pile_t* level ) /* effectue une addition */
+/* Addition */
+pile_t* pile_add ( pile_t* pile, int gauche, int droit )
 {
-    if ( level == NULL ) /* la pile est vide */
-        return NULL;
-    if ( level->under == NULL ) /* la pile comporte qu'un element */
-    {
-        err = 1;
-        level = pile_pop(level);
-        return level;
-    }
-    int gauche = level->under->value, droit = level->value;
-    pile_t* under = level->under->under;
-    free(level->under);
-    free(level);
-    return level_add(under, level_create(gauche+droit, under));
+    if ( !verif_pile(pile, 2) )
+        erreur(pile);
+
+    return level_add(pile, level_create(gauche+droit));
+}
+
+/* Affiche une erreur et stop le programme */
+void erreur( pile_t* pile )
+{
+    printf("ERROR\n");
+    pile_reset(pile);
+    exit(1);
 }
 
 pile_t* operation ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
-    if ( !strcmp("ROL", instruction) )
+    int gauche = level->under->value, droit = level->value;
+
+    if ( !strcmp(ROL, instruction) )
     {
         int n = pile->value;
         pile = pile_pop(pile);
         n = pile_rol(pile, pile->under, n-1);
-        pile = level_add(pile, level_create(n, pile));
+        pile = level_add(pile, level_create(n));
     }
-    else if ( !strcmp("SWP", instruction) )
+    else if ( !strcmp(SWP, instruction) )
         pile = pile_swp(pile);
-    else if ( !strcmp("DUP", instruction) )
+    else if ( !strcmp(DUP, instruction) )
         pile = pile_dup(pile);
-    else if ( !strcmp("POP", instruction) )
+    else if ( !strcmp(POP, instruction) )
         pile = pile_pop(pile);
-    else if ( !strcmp("MOD", instruction) )
-        pile = pile_mod(pile);
-    else if ( !strcmp("DIV", instruction) )
-        pile = pile_div(pile);
-    else if ( !strcmp("MUL", instruction) )
-        pile = pile_mul(pile);
-    else if ( !strcmp("SUB", instruction) )
-        pile = pile_sub(pile);
-    else if ( !strcmp("ADD", instruction) )
-        pile = pile_add(pile);
+    else if ( !strcmp(MOD, instruction) )
+        pile = pile_mod(pile_pop(pile_pop(pile)), gauche, droit);
+    else if ( !strcmp(DIV, instruction) )
+        pile = pile_div(pile_pop(pile_pop(pile)), gauche, droit);
+    else if ( !strcmp(MUL, instruction) )
+        pile = pile_mul(pile_pop(pile_pop(pile)), gauche, droit);
+    else if ( !strcmp(SUB, instruction) )
+        pile = pile_sub(pile_pop(pile_pop(pile)), gauche, droit);
+    else if ( !strcmp(ADD, instruction) )
+        pile = pile_add(pile_pop(pile_pop(pile)), gauche, droit);
+    else
+        erreur();
 
     return pile;
 }
 
-/* Permet de savoir si l'instruction recupere est une instruction reconnu */
-int operation_connue ( char instruction[INSTRUCTION_TAILLE] )
+/* Permet de verifier si l'on possede bien n nombre(s) dans la pile */
+int verif_pile ( pile_t* pile, int n )
 {
-    return strcmp(ROL, instruction)
-        && strcmp(SWP, instruction)
-        && strcmp(DUP, instruction)
-        && strcmp(POP, instruction)
-        && strcmp(MOD, instruction)
-        && strcmp(DIV, instruction)
-        && strcmp(MUL, instruction)
-        && strcmp(SUB, instruction)
-        && strcmp(ADD, instruction);
-}
+    if ( pile == NULL )
+        return 0;
 
-/* Permet de verifier qu'on possede bien deux nombres pour effectuer l'operation */
-int manque_nombre ( pile_t* pile )
-{
-    return pile == NULL
-        || pile->under == NULL;
-
+    if ( pile > 1 )
+        return verif_pile(pile->under, n--)
+    else
+        return 1;
 }
 
 /* Verifie la division par 0 */
-int division_par_zero ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
+int verif_div ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
+    pile_show(pile, 0);
+
+    /* dans le cas d'une division par zero il faut pop les 2 elements superieur de la pile avant de l'afficher */
+    if ( !manque_nombre(pile) )
+        pile = pile_pop(pile_pop(pile));
+
+
     return !strcmp(DIV, instruction)
         && pile->value == 0;
 }
 
-/* Effectue une suite de verification pour trouver d'eventuelle erreurs */
-int verification ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
+/* Verifie que le nombre a roll existe */
+void verif_roll ( pile_t* pile, char instruction[INSTRUCTION_TAILLE] )
 {
-    return operation_connue(instruction)
-        && !manque_nombre(pile)
-        && !division_par_zero(pile, instruction);
-
-    return pile;
+    /*
+    pile_t* under = level->under->under;
+    free(level->under);
+    free(level);*/
 }
 
 int main()
@@ -334,7 +304,7 @@ int main()
 
     /* boucle de récupération des instructions */
     int i;
-    for ( i = 0; i < N && err != 1; i++ )
+    for ( i = 0; i < N && !erreur; i++ )
     {
         /* recupere l'instruction */
         char instruction[INSTRUCTION_TAILLE];
@@ -342,31 +312,12 @@ int main()
 
         /* verifie si l'instruction est un nombre ou une operation */
         if ( est_un_int(instruction) )
-            pile = level_add(pile, level_create(cast_en_int(instruction), pile));
+            pile = level_add(pile, level_create(cast_en_int(instruction)));
         else
-        {
-            /* verifie si il existe une erreur sur l'operation */
-            if ( verification(pile, instruction) )
-            {
-                erreur = verification(pile, instruction);
-                break;
-            }
-
             pile = operation(pile, instruction);
-        }
     }
 
-    /* affiche la pile */
     pile_show(pile, 0);
-
-    /* ajoute ERROR a la fin de la pile si il y a une erreur */
-    if ( erreur )
-    {
-        if ( pile != NULL )
-            printf(" ");
-        printf("ERROR");
-    }
-
     printf("\n");
 
     /* libere la memoire */
