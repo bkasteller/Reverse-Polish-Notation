@@ -1,3 +1,9 @@
+/*
+ * by : KASTELLER Bryan
+ * lien git hub : https://github.com/bkasteller/Reverse-Polish-Notation
+ * fichier : remastered.c pour la version opti, main.c correspond √† la premi√®re version
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,7 +29,7 @@ pile_t* level_create(int value)
 
     if ( level == NULL )
     {
-        fprintf(stderr, "MÈmoire insuffisante ‡ la creation d'un nouveau level de la pile\n");
+        fprintf(stderr, "M√©moire insuffisante √† la creation d'un nouveau level de la pile\n");
         exit(1);
     }
 
@@ -35,7 +41,7 @@ pile_t* level_create(int value)
     return level;
 }
 
-/* Ajoute un level ‡ la pile */
+/* Ajoute un level √† la pile */
 pile_t* level_add ( pile_t* pile, pile_t* level )
 {
     /* ajout au dessus de la pile */
@@ -278,7 +284,7 @@ int main()
     /* creation de la pile vide */
     pile_t* pile = NULL;
 
-    /* boucle de rÈcupÈration des instructions */
+    /* boucle de r√©cup√©ration des instructions */
     int i;
     for ( i = 0; i < N; i++ )
     {
