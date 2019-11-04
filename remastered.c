@@ -113,7 +113,7 @@ int verif_pile ( pile_t* pile, int n )
         return 0;
 
     if ( n > 1 )
-        return verif_pile(pile->under, n--);
+        return verif_pile(pile->under, n-1);
     else
         return 1;
 }
@@ -159,10 +159,10 @@ pile_t* pile_pop ( pile_t* pile )
 }
 
 /* Verifie la division par 0 */
-void verif_div ( pile_t* pile )
+void verif_div ( pile_t* pile, int droit )
 {
     /* droit == 0 */
-    if ( !pile->value )
+    if ( !droit )
     {
         pile_show(pile, 0);
         printf(" ");
@@ -179,7 +179,7 @@ pile_t* pile_mod ( pile_t* pile )
     int gauche = pile->under->value, droit = pile->value;
     pile = pile_pop(pile_pop(pile));
 
-    verif_div(pile);
+    verif_div(pile, droit);
 
     return level_add(pile, level_create(gauche%droit));
 }
@@ -193,7 +193,7 @@ pile_t* pile_div ( pile_t* pile )
     int gauche = pile->under->value, droit = pile->value;
     pile = pile_pop(pile_pop(pile));
 
-    verif_div(pile);
+    verif_div(pile, droit);
 
     return level_add(pile, level_create(gauche/droit));
 }
